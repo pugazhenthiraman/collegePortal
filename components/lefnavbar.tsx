@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 const adminLinks = [
   { name: "Dashboard", path: "/admin/dashboard/adminHome" },
   { name: "College Onboarding", path: "/admin/dashboard/collegeOnboarding" },
-  { name: "Subscription Status", path: "/admin/dashboard/subscription-status" },
-  { name: "Reports", path: "/admin/dashboard/reports" },
+  { name: "Subscription Status", path: "/admin/dashboard/subscriptionStatus" },
+  { name: "Reports", path: "/admin/dashboard/report" },
 ];
 
 export default function LeftSidebar() {
