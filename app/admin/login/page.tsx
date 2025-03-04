@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
     // Simulated login logic (Replace this with API authentication)
     setTimeout(() => {
       if (data.email === "admin@saas.com" && data.password === "admin123") {
-        router.push("/admin/adminhome"); // ✅ Redirect to Admin Home
+        router.push("/admin/dashboard/adminHome"); // ✅ Redirect to Admin Home
       } else {
         setErrorMessage("Invalid email or password");
       }
