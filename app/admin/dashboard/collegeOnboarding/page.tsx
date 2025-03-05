@@ -11,6 +11,8 @@ export default function SuperAdminDashboard() {
   const { data, loading, handleApproval } = useCollegeApprovals();
   const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [rejectRemark, setRejectRemark] = useState("");
+  const [showRejectInput, setShowRejectInput] = useState(false);
 
   useEffect(() => {
     console.log("Super Admin Dashboard - All Data:", data);
@@ -63,7 +65,10 @@ export default function SuperAdminDashboard() {
                     </Button>
                     {/* Reject Button */}
                     <Button
-                      onClick={() => handleApproval(college.id, false)}
+                      onClick={() => {
+                        setSelectedCollege(college);
+                        setShowRejectInput(true);
+                      }}
                       className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md transition-transform transform hover:scale-105"
                     >
                       Reject
@@ -107,6 +112,36 @@ export default function SuperAdminDashboard() {
         </TabsContent>
       </Tabs>
 
+      {/* Reject Reason Input */}
+      {showRejectInput && selectedCollege && (
+        <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
+          <label className="block text-gray-700 font-medium">Reason for Rejection:</label>
+          <textarea
+            className="w-full p-2 border border-gray-300 rounded-lg mt-2"
+            value={rejectRemark}
+            onChange={(e) => setRejectRemark(e.target.value)}
+            placeholder="Enter rejection reason..."
+          ></textarea>
+          <div className="flex justify-end space-x-3 mt-4">
+            <Button onClick={() => setShowRejectInput(false)} className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (rejectRemark.trim()) {
+                  handleApproval(selectedCollege.id, false, rejectRemark);
+                  setShowRejectInput(false);
+                  setRejectRemark("");
+                }
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
+            >
+              Confirm Rejection
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* College Details Modal */}
       {selectedCollege && (
         <CollegeDetailsModal
@@ -118,7 +153,7 @@ export default function SuperAdminDashboard() {
             setModalOpen(false);
           }}
           onReject={() => {
-            handleApproval(selectedCollege.id, false);
+            handleApproval(selectedCollege.id, false, rejectRemark);
             setModalOpen(false);
           }}
         />
