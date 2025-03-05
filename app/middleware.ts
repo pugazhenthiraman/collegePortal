@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import jwt from "jsonwebtoken"; // ✅ Import JWT for manual verification
 
 const roleRoutes: Record<string, string[]> = {
   SUPER_ADMIN: ["/admin", "/admin/dashboard"],
@@ -13,7 +13,6 @@ const roleRoutes: Record<string, string[]> = {
 };
 
 export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const pathname = req.nextUrl.pathname;
 
   // ✅ Allow public routes (Improved to allow /auth/* sub-routes)
@@ -21,7 +20,6 @@ export async function middleware(req: NextRequest) {
     "/",
     "/auth",
     "/auth/login",
-    "/api/auth/signin",
     "/auth/superadmin",
     "/auth/college",
     "/auth/department",
@@ -33,20 +31,30 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // ✅ Unauthorized API requests return JSON instead of redirecting
-  if (!token) {
-    if (pathname.startsWith("/api")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    return NextResponse.redirect(new URL("/auth/login", req.url));
+  // ✅ Extract Bearer Token from Authorization Header
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Unauthorized - No token provided" }, { status: 401 });
   }
 
-  // ✅ Prevent crashes if `role` is missing
-  const userRole: any = token.role || "UNKNOWN";
+  // ✅ Get the token from the header
+  const token = authHeader.split(" ")[1];
 
+  // ✅ Verify JWT token
+  let decodedToken  : any;
+  try {
+    decodedToken = jwt.verify(token, process.env.NEXTAUTH_SECRET!);
+  } catch (error) {
+    return NextResponse.json({ error: "Unauthorized - Invalid token" }, { status: 401 });
+  }
+
+  // ✅ Ensure the user has a valid role
+  const userRole: any = decodedToken.role || "UNKNOWN";
+
+  // ✅ Check if the user has access to the requested route
   const allowedRoutes = roleRoutes[userRole] || [];
   if (!allowedRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.json({ error: "Forbidden - Access denied" }, { status: 403 });
   }
 
   return NextResponse.next(); // ✅ Allow request to proceed
